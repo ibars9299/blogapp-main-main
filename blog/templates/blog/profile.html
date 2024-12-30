@@ -1,0 +1,271 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Profil Başlığı -->
+    <div class="card bg-dark">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <div class="position-relative" style="width: 100px; height: 100px;">
+                    <img src="{{ profile_user.profile.image_url }}" class="rounded-circle w-100 h-100" style="object-fit: cover;">
+                    {% if is_own_profile %}
+                        <label for="profileImage" class="position-absolute bottom-0 end-0 bg-dark rounded-circle p-2 cursor-pointer">
+                            <i class="fas fa-camera text-light"></i>
+                        </label>
+                        <input type="file" id="profileImage" style="display: none;" accept="image/*">
+                    {% endif %}
+                </div>
+                <div class="ms-4 flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="mb-0">{{ profile_user.username }}</h4>
+                        {% if not is_own_profile %}
+                            <button class="btn btn-sm {% if is_following %}btn-accent text-white{% else %}btn-outline-accent{% endif %} follow-button"
+                                    onclick="toggleFollow(this, '{{ profile_user.username }}')"
+                                    style="min-width: 120px;">
+                                <i class="fas {% if is_following %}fa-user-minus{% else %}fa-user-plus{% endif %} me-2"></i>
+                                {% if is_following %}Takibi Bırak{% else %}Takip Et{% endif %}
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-4 text-muted">
+                        <div>{{ movies_count }} Film</div>
+                        <div>{{ series_count }} Dizi</div>
+                        <div>{{ books_count }} Kitap</div>
+                        <div>{{ posts_count }} Gönderi</div>
+                        <a href="{% url 'blog:followers' profile_user.username %}" class="text-decoration-none text-muted">
+                            <span class="followers-count">{{ profile_user.followers.count }}</span> Takipçi
+                        </a>
+                        <a href="{% url 'blog:following' profile_user.username %}" class="text-decoration-none text-muted">
+                            <span class="following-count">{{ profile_user.following.count }}</span> Takip
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sekmeler -->
+    <ul class="nav nav-tabs mt-4">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#content">İçerikler</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#posts">Gönderiler</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- İçerikler Sekmesi -->
+        <div class="tab-pane fade show active" id="content">
+            <div class="row g-4">
+                {% for movie in movies %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark h-100">
+                            <img src="{{ movie.movie.image }}" class="card-img-top" style="height: 300px; object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ movie.movie.title }}</h5>
+                                <p class="text-muted">{{ movie.movie.year }} • {{ movie.movie.genre }}</p>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-clock me-1"></i> {{ movie.movie.duration }} dakika
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% for series in series %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark h-100">
+                            <img src="{{ series.series.image }}" class="card-img-top" style="height: 300px; object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ series.series.title }}</h5>
+                                <p class="text-muted">{{ series.series.year }} • {{ series.series.genre }}</p>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-film me-1"></i> {{ series.series.seasons }} Sezon
+                                    <i class="fas fa-play ms-2 me-1"></i> {{ series.series.episodes }} Bölüm
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% for book in books %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-dark h-100">
+                            <img src="{{ book.book.image }}" class="card-img-top" style="height: 300px; object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ book.book.title }}</h5>
+                                <p class="text-muted">{{ book.book.year }} • {{ book.book.genre }}</p>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-book me-1"></i> {{ book.book.pages }} sayfa
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Gönderiler Sekmesi -->
+        <div class="tab-pane fade" id="posts">
+            {% for post in posts %}
+                <div class="card bg-dark mb-4" data-post-id="{{ post.id }}">
+                    <div class="card-header bg-dark border-secondary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ post.user.profile.image_url }}" class="rounded-circle me-3" 
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                <div>
+                                    <h6 class="mb-0">{{ post.user.username }}</h6>
+                                    <small class="text-muted">{{ post.created_at|timesince }} önce</small>
+                                </div>
+                            </div>
+                            {% if is_own_profile %}
+                                <button class="btn btn-sm btn-dark" onclick="deletePost({{ post.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <img src="{% if post.movie %}{{ post.movie.image }}{% elif post.series %}{{ post.series.image }}{% else %}{{ post.book.image }}{% endif %}" 
+                                 class="rounded me-3" style="width: 60px; height: 90px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-1">{% if post.movie %}{{ post.movie.title }}{% elif post.series %}{{ post.series.title }}{% else %}{{ post.book.title }}{% endif %}</h6>
+                                <div class="rating text-warning">
+                                    {% for i in "12345678910"|make_list %}
+                                        <i class="fas fa-star {% if forloop.counter <= post.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{ post.content }}</p>
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-sm {% if request.user in post.likes.all %}btn-accent{% else %}btn-dark{% endif %}"
+                                    onclick="toggleLike(this, {{ post.id }})">
+                                <i class="fas fa-heart me-1"></i>
+                                <span class="likes-count">{{ post.likes.count }}</span>
+                            </button>
+                            <button class="btn btn-sm btn-dark" 
+                                    onclick="showComments({{ post.id }})">
+                                <i class="fas fa-comment me-1"></i>
+                                <span class="comments-count">{{ post.comments.count }}</span>
+                            </button>
+                        </div>
+                        <!-- Yorum bölümü -->
+                        <div class="comments-section mt-3" id="comments-{{ post.id }}" style="display: none;">
+                            <div class="comments-list mb-3">
+                                {% for comment in post.comments.all %}
+                                    <div class="d-flex gap-2 mb-2" id="comment-{{ comment.id }}">
+                                        <img src="{{ comment.user.profile.image_url }}" class="rounded-circle"
+                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                        <div class="bg-dark rounded p-2 flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <small class="fw-bold">{{ comment.user.username }}</small>
+                                                    <small class="text-muted ms-2">{{ comment.created_at|timesince }} önce</small>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm p-0 {% if request.user in comment.likes.all %}text-accent{% else %}text-muted{% endif %}"
+                                                            onclick="toggleCommentLike(this, {{ comment.id }})">
+                                                        <i class="fas fa-heart"></i>
+                                                        <span class="comment-likes-count">{{ comment.likes.count }}</span>
+                                                    </button>
+                                                    {% if request.user == comment.user or request.user == post.user %}
+                                                        <button class="btn btn-sm p-0 text-muted" onclick="deleteComment({{ comment.id }}, {{ post.id }})">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="mb-0 small">{{ comment.content }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if request.user.is_authenticated %}
+                                <div class="d-flex gap-2">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" 
+                                           placeholder="Yorum yaz..." id="comment-input-{{ post.id }}">
+                                    <button class="btn btn-sm btn-accent" onclick="addComment({{ post.id }})">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center text-muted">
+                    {% if is_own_profile %}
+                        Henüz bir gönderi paylaşmadınız.
+                    {% else %}
+                        {{ profile_user.username }} henüz bir gönderi paylaşmadı.
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Profil resmi güncelleme
+document.getElementById('profileImage')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    fetch('{% url "blog:update_profile_image" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+});
+
+function toggleFollow(button, username) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/toggle-follow/${username}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.is_following) {
+                button.classList.remove('btn-outline-accent');
+                button.classList.add('btn-accent', 'text-white');
+                button.innerHTML = '<i class="fas fa-user-minus me-2"></i>Takibi Bırak';
+            } else {
+                button.classList.remove('btn-accent', 'text-white');
+                button.classList.add('btn-outline-accent');
+                button.innerHTML = '<i class="fas fa-user-plus me-2"></i>Takip Et';
+            }
+            
+            const followersCount = document.querySelector('.followers-count');
+            if (followersCount) {
+                followersCount.textContent = data.followers_count;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %} 

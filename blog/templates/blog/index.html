@@ -1,0 +1,425 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Üst Butonlar -->
+    <div class="mb-3">
+        <a href="?view=content" class="btn {% if view_type == 'content' %}btn-accent{% else %}btn-dark{% endif %}">İçerikler</a>
+        <a href="?view=posts" class="btn {% if view_type == 'posts' %}btn-accent{% else %}btn-dark{% endif %}">Keşfet</a>
+    </div>
+
+    <!-- Alt Butonlar -->
+    <div class="mb-4">
+        <a href="?view={{ view_type }}" class="btn btn-sm {% if not category %}btn-accent{% else %}btn-dark{% endif %}">Tümü</a>
+        <a href="?view={{ view_type }}&category=movies" class="btn btn-sm {% if category == 'movies' %}btn-accent{% else %}btn-dark{% endif %}">Filmler</a>
+        <a href="?view={{ view_type }}&category=series" class="btn btn-sm {% if category == 'series' %}btn-accent{% else %}btn-dark{% endif %}">Diziler</a>
+        <a href="?view={{ view_type }}&category=books" class="btn btn-sm {% if category == 'books' %}btn-accent{% else %}btn-dark{% endif %}">Kitaplar</a>
+    </div>
+
+    {% if view_type == 'content' %}
+        <!-- İçerik Kartları -->
+        <div class="row g-4">
+            {% for item in content %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card bg-dark h-100">
+                    <img src="{{ item.image }}" class="card-img-top" style="height: 300px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.title }}</h5>
+                        <p class="text-muted">{{ item.year }} • {{ item.genre }}</p>
+                        
+                        <!-- Film için süre -->
+                        {% if item|isinstance:'Movie' %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-clock me-1"></i> {{ item.duration }} dakika
+                            </p>
+                        
+                        <!-- Dizi için sezon ve bölüm -->
+                        {% elif item|isinstance:'Series' %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-film me-1"></i> {{ item.seasons }} Sezon
+                                <i class="fas fa-play ms-2 me-1"></i> {{ item.episodes }} Bölüm
+                            </p>
+                        
+                        <!-- Kitap için sayfa sayısı -->
+                        {% else %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-book me-1"></i> {{ item.pages }} sayfa
+                            </p>
+                        {% endif %}
+
+                        {% if request.user.is_authenticated %}
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm {% if item.is_watched or item.is_read %}btn-success{% else %}btn-dark{% endif %} flex-grow-1"
+                                        onclick="{% if item|isinstance:'Book' %}toggleRead{% else %}toggleWatched{% endif %}(this, '{% if item|isinstance:'Movie' %}movie{% elif item|isinstance:'Series' %}series{% else %}book{% endif %}', {{ item.id }})">
+                                    <i class="fas {% if item.is_watched or item.is_read %}fa-check{% else %}fa-plus{% endif %} me-1"></i>
+                                    {% if item|isinstance:'Book' %}
+                                        {% if item.is_read %}Okudum{% else %}Oku{% endif %}
+                                    {% else %}
+                                        {% if item.is_watched %}İzledim{% else %}İzle{% endif %}
+                                    {% endif %}
+                                </button>
+                                <a href="{% url 'blog:create_post' %}?type={% if item|isinstance:'Movie' %}movie{% elif item|isinstance:'Series' %}series{% else %}book{% endif %}&id={{ item.id }}" 
+                                   class="btn btn-sm btn-accent">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Keşfet - Gönderiler -->
+        <div class="posts-container">
+            {% for post in posts %}
+                <div class="card bg-dark mb-4">
+                    <div class="card-header bg-dark border-secondary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <a href="{% url 'blog:profile' post.user.username %}" class="text-decoration-none text-light">
+                                    <img src="{{ post.user.profile.image_url }}" class="rounded-circle me-3" 
+                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                    <span>{{ post.user.username }}</span>
+                                </a>
+                                <small class="text-muted ms-2">{{ post.created_at|timesince }} önce</small>
+                            </div>
+                            {% if request.user == post.user %}
+                                <button class="btn btn-sm btn-dark" onclick="deletePost({{ post.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <img src="{% if post.movie %}{{ post.movie.image }}{% elif post.series %}{{ post.series.image }}{% else %}{{ post.book.image }}{% endif %}" 
+                                 class="rounded me-3" style="width: 60px; height: 90px; object-fit: cover;">
+                            <div>
+                                <h6 class="mb-1">{% if post.movie %}{{ post.movie.title }}{% elif post.series %}{{ post.series.title }}{% else %}{{ post.book.title }}{% endif %}</h6>
+                                <div class="rating text-warning">
+                                    {% for i in "12345678910"|make_list %}
+                                        <i class="fas fa-star {% if forloop.counter <= post.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{ post.content }}</p>
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-sm {% if request.user in post.likes.all %}btn-accent text-white{% else %}btn-dark{% endif %} like-button"
+                                    onclick="toggleLike(this, {{ post.id }})">
+                                <i class="fas fa-heart"></i>
+                                <span class="likes-count ms-1">{{ post.likes.count }}</span>
+                            </button>
+                            <button class="btn btn-sm btn-dark" onclick="showComments({{ post.id }})">
+                                <i class="fas fa-comment me-1"></i>
+                                <span class="comments-count">{{ post.comments.count }}</span>
+                            </button>
+                        </div>
+                        <!-- Yorum bölümü -->
+                        <div class="comments-section mt-3" id="comments-{{ post.id }}" style="display: none;">
+                            <!-- Yorumlar JavaScript ile yüklenecek -->
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.btn-dark {
+    background-color: var(--secondary-dark);
+    border-color: var(--secondary-dark);
+}
+
+.btn-dark:hover {
+    background-color: #2c2c2c;
+    border-color: #2c2c2c;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+</style>
+
+{% csrf_token %}
+
+<script>
+function toggleWatched(button, type, id) {
+    fetch(`/toggle-watched/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            id: id,
+            type: type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const icon = button.querySelector('i');
+            if (data.status) {
+                button.classList.remove('btn-dark');
+                button.classList.add('btn-success');
+                icon.classList.remove('fa-plus');
+                icon.classList.add('fa-check');
+                button.innerHTML = `<i class="fas fa-check me-1"></i>İzledim`;
+            } else {
+                button.classList.remove('btn-success');
+                button.classList.add('btn-dark');
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-plus');
+                button.innerHTML = `<i class="fas fa-plus me-1"></i>İzle`;
+            }
+        }
+    });
+}
+
+function toggleRead(button, type, id) {
+    fetch(`/toggle-read/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            id: id,
+            type: type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const icon = button.querySelector('i');
+            if (data.status) {
+                button.classList.remove('btn-dark');
+                button.classList.add('btn-success');
+                icon.classList.remove('fa-plus');
+                icon.classList.add('fa-check');
+                button.innerHTML = `<i class="fas fa-check me-1"></i>Okudum`;
+            } else {
+                button.classList.remove('btn-success');
+                button.classList.add('btn-dark');
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-plus');
+                button.innerHTML = `<i class="fas fa-plus me-1"></i>Oku`;
+            }
+        }
+    });
+}
+
+function toggleLike(button, postId) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/post/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.is_liked) {
+                // Beğenildi durumu
+                button.classList.remove('btn-dark');
+                button.classList.add('btn-accent', 'text-white');
+            } else {
+                // Beğenilmedi durumu
+                button.classList.remove('btn-accent', 'text-white');
+                button.classList.add('btn-dark');
+            }
+            
+            // Beğeni sayısını güncelle
+            const likesCount = button.querySelector('.likes-count');
+            likesCount.textContent = data.likes_count;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function showComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    if (commentsSection.style.display === 'none') {
+        fetch(`/post/${postId}/get-comments/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let html = '<div class="comments-list mb-3">';
+                    data.comments.forEach(comment => {
+                        html += `
+                            <div class="d-flex gap-2 mb-2" id="comment-${comment.id}">
+                                <img src="${comment.user_image}" class="rounded-circle"
+                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                <div class="bg-dark rounded p-2 flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <small class="fw-bold">${comment.user}</small>
+                                            <small class="text-muted ms-2">${comment.created_at}</small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="comment-like-button ${comment.is_liked ? 'liked' : 'text-muted'}"
+                                                    onclick="toggleCommentLike(this, ${comment.id})">
+                                                <i class="fas fa-heart"></i>
+                                                <span class="comment-like-count">${comment.likes_count}</span>
+                                            </button>
+                                            ${comment.can_delete ? `
+                                                <button class="comment-like-button text-muted" onclick="deleteComment(${comment.id}, ${postId})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 small">${comment.content}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    
+                    // Yorum yazma alanı
+                    html += `
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" 
+                                   placeholder="Yorum yaz..." id="comment-input-${postId}">
+                            <button class="btn btn-sm btn-accent" onclick="addComment(${postId})">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    commentsSection.innerHTML = html;
+                    commentsSection.style.display = 'block';
+                }
+            });
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+function addComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+    if (!content) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/post/${postId}/comment/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Yorum sayısını güncelle
+            const commentsCount = document.querySelector(`#comments-${postId}`).previousElementSibling.querySelector('.comments-count');
+            commentsCount.textContent = parseInt(commentsCount.textContent) + 1;
+
+            // Yeni yorumu ekle
+            const commentsList = document.querySelector(`#comments-${postId} .comments-list`);
+            const newComment = `
+                <div class="d-flex gap-2 mb-2" id="comment-${data.comment_id}">
+                    <img src="${data.user_image}" class="rounded-circle"
+                         style="width: 32px; height: 32px; object-fit: cover;">
+                    <div class="bg-dark rounded p-2 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <small class="fw-bold">${data.username}</small>
+                                <small class="text-muted ms-2">şimdi</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm p-0 text-muted"
+                                        onclick="toggleCommentLike(this, ${data.comment_id})">
+                                    <i class="fas fa-heart"></i>
+                                    <span class="comment-likes-count">0</span>
+                                </button>
+                                <button class="btn btn-sm p-0 text-muted" onclick="deleteComment(${data.comment_id}, ${postId})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="mb-0 small">${data.content}</p>
+                    </div>
+                </div>
+            `;
+            commentsList.insertAdjacentHTML('beforeend', newComment);
+            input.value = '';
+        }
+    });
+}
+
+function deleteComment(commentId, postId) {
+    if (!confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/comment/${commentId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Yorumu DOM'dan kaldır
+            document.getElementById(`comment-${commentId}`).remove();
+            
+            // Yorum sayısını güncelle
+            const commentsCount = document.querySelector(`#comments-${postId}`).previousElementSibling.querySelector('.comments-count');
+            commentsCount.textContent = parseInt(commentsCount.textContent) - 1;
+        }
+    });
+}
+
+function toggleCommentLike(button, commentId) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/comment/${commentId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Beğeni durumunu güncelle
+            if (data.is_liked) {
+                button.classList.remove('text-muted');
+                button.classList.add('liked');
+            } else {
+                button.classList.remove('liked');
+                button.classList.add('text-muted');
+            }
+            
+            // Beğeni sayısını güncelle
+            const likesCount = button.querySelector('.comment-like-count');
+            likesCount.textContent = data.likes_count;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

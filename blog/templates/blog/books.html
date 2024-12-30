@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Library</title>
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar bg-primary-subtle fixed-top">
+            <div class="container-fluid">
+                <div class="nav-start">
+                    <a href="/" class="navbar-brand">
+                        <i class="fa-solid fa-film"></i> Library
+                    </a>
+                </div>
+                <div class="nav-center">
+                    <form id="nav-from-search" method="get" action class="w-100">
+                        <div class="navbar-search d-flex align-items-center">
+                            <input id="search-input" class="form-control" placeholder="Ara..." autocapitalize="off" autocomplete="off" type="search">
+                            <button type="submit" class="btn btn-primary ms-2"><i class="fa-solid fa-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="navbar-end">
+                    <a href="/" class="btn btn-login">Giriş Yap</a>
+                    <a href="/" class="btn btn-register ms-2">Kayıt Ol</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- İçerik -->
+        <div class="container pt-5" style="margin-top: 70px;">
+            <div class="row">
+                <!-- Kart 1 -->
+                <div class="col-md-3 mb-4">
+                    <div class="card" style="width: 100%;">
+                        <div class="card-header">
+                            <i class="fa-solid fa-house"></i> Anasayfa
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item active">
+                                <i class="fa-solid fa-compass"></i> Keşfet
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Kart 2 -->
+                <div class="col-md-9 mb-4">
+                    <div class="card text-center" style="width: 100%;">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/index">Keşfet</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/movies">Film</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/series">Dizi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="">Kitap</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="card mb-3" style="max-width: 1000px;">
+                                <div class="row g-0">
+                                  <div class="col-md-4 p-2">
+                                    <img src="https://picsum.photos/200/300" class="img-fluid rounded-start" alt="...">
+                                  </div>
+                                  <div class="col-md-8">
+                                    <div class="card-body">
+                                      <h5 class="card-title">Kayıp Tanrılar Ülkesi</h5>
+                                      <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                                      <p class="card-text"><small class="text-body-secondary">Last updated 3 mins ago</small></p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

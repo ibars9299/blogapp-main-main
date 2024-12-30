@@ -1,0 +1,145 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body p-4">
+                    <!-- Logo ve Başlık -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-accent mb-3"></i>
+                        <h4 class="mb-0">MovieLib'e Katılın</h4>
+                        <p class="text-muted">Film, dizi ve kitap dünyasına hoş geldiniz</p>
+                    </div>
+
+                    <!-- Kayıt Formu -->
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Kullanıcı Adı -->
+                        <div class="form-floating mb-3">
+                            <input type="text" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="username" 
+                                   name="username" 
+                                   placeholder="Kullanıcı Adı"
+                                   required>
+                            <label for="username" class="text-muted">Kullanıcı Adı</label>
+                            <div class="invalid-feedback">
+                                Lütfen bir kullanıcı adı girin.
+                            </div>
+                        </div>
+
+                        <!-- Şifre -->
+                        <div class="form-floating mb-3">
+                            <input type="password" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="password1" 
+                                   name="password1" 
+                                   placeholder="Şifre"
+                                   required>
+                            <label for="password1" class="text-muted">Şifre</label>
+                            <div class="invalid-feedback">
+                                Lütfen bir şifre girin.
+                            </div>
+                        </div>
+
+                        <!-- Şifre Tekrar -->
+                        <div class="form-floating mb-4">
+                            <input type="password" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="password2" 
+                                   name="password2" 
+                                   placeholder="Şifre Tekrar"
+                                   required>
+                            <label for="password2" class="text-muted">Şifre Tekrar</label>
+                            <div class="invalid-feedback">
+                                Şifreler eşleşmiyor.
+                            </div>
+                        </div>
+
+                        <!-- Kayıt Ol Butonu -->
+                        <button type="submit" class="btn btn-accent w-100 py-2 mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Kayıt Ol
+                        </button>
+
+                        <!-- Giriş Yap Linki -->
+                        <p class="text-center mb-0">
+                            Zaten hesabınız var mı? 
+                            <a href="{% url 'blog:login' %}" class="text-accent text-decoration-none">
+                                Giriş Yapın
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Hata Mesajları -->
+            {% if form.errors %}
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            {{ error }}<br>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Form kontrolleri için özel stiller */
+.form-floating > .form-control {
+    background-color: var(--secondary-dark) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(.85) translateY(-1rem) translateX(.15rem);
+    color: var(--accent);
+}
+
+/* Animasyonlar */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-accent {
+    transition: all 0.3s ease;
+}
+
+.btn-accent:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+/* Form validasyonu */
+.form-control:valid {
+    border-color: #198754;
+}
+
+.form-control:invalid {
+    border-color: var(--accent);
+}
+</style>
+{% endblock %} 

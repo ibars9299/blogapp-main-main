@@ -1,0 +1,104 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card bg-dark">
+        <!-- Post Başlığı -->
+        <div class="card-header bg-dark border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'blog:profile' post.user.username %}" class="text-decoration-none text-light">
+                        <img src="{{ post.user.profile.image_url }}" class="rounded-circle me-3" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        <span>{{ post.user.username }}</span>
+                    </a>
+                    <small class="text-muted ms-2">{{ post.created_at|timesince }} önce</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post İçeriği -->
+        <div class="card-body">
+            <div class="d-flex mb-3">
+                <img src="{% if post.movie %}{{ post.movie.image }}{% elif post.series %}{{ post.series.image }}{% else %}{{ post.book.image }}{% endif %}" 
+                     class="rounded me-3" style="width: 60px; height: 90px; object-fit: cover;">
+                <div>
+                    <h6 class="mb-1">{% if post.movie %}{{ post.movie.title }}{% elif post.series %}{{ post.series.title }}{% else %}{{ post.book.title }}{% endif %}</h6>
+                    <div class="rating text-warning">
+                        {% for i in "12345678910"|make_list %}
+                            <i class="fas fa-star {% if forloop.counter <= post.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <p class="card-text">{{ post.content }}</p>
+            
+            <!-- Beğeni ve Yorum Butonları -->
+            <div class="d-flex gap-3">
+                <button class="btn btn-sm {% if is_liked %}btn-accent text-white{% else %}btn-dark{% endif %} like-button"
+                        onclick="toggleLike(this, {{ post.id }})">
+                    <i class="fas fa-heart"></i>
+                    <span class="likes-count ms-1">{{ post.likes.count }}</span>
+                </button>
+                <button class="btn btn-sm btn-dark" onclick="showComments({{ post.id }})">
+                    <i class="fas fa-comment me-1"></i>
+                    <span class="comments-count">{{ post.comments.count }}</span>
+                </button>
+            </div>
+
+            <!-- Yorumlar Bölümü -->
+            <div class="comments-section mt-3" id="comments-{{ post.id }}">
+                <div class="comments-list mb-3">
+                    {% for comment in post.comments.all %}
+                        <div class="d-flex gap-2 mb-2" id="comment-{{ comment.id }}">
+                            <img src="{{ comment.user.profile.image_url }}" class="rounded-circle"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                            <div class="bg-dark rounded p-2 flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <small class="fw-bold">{{ comment.user.username }}</small>
+                                        <small class="text-muted ms-2">{{ comment.created_at|timesince }} önce</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="comment-like-button {% if request.user in comment.likes.all %}liked{% else %}text-muted{% endif %}"
+                                                onclick="toggleCommentLike(this, {{ comment.id }})">
+                                            <i class="fas fa-heart"></i>
+                                            <span class="comment-like-count">{{ comment.likes.count }}</span>
+                                        </button>
+                                        {% if request.user == comment.user or request.user == post.user %}
+                                            <button class="comment-like-button text-muted" onclick="deleteComment({{ comment.id }}, {{ post.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="mb-0 small">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Yorum Yazma Alanı -->
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" 
+                           placeholder="Yorum yaz..." id="comment-input-{{ post.id }}">
+                    <button class="btn btn-sm btn-accent" onclick="addComment({{ post.id }})">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sayfa yüklendiğinde yorumları otomatik aç
+document.addEventListener('DOMContentLoaded', function() {
+    const commentsSection = document.querySelector('.comments-section');
+    if (commentsSection) {
+        commentsSection.style.display = 'block';
+    }
+});
+</script>
+{% endblock %} 

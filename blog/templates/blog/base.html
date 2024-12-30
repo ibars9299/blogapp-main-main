@@ -1,0 +1,375 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLib</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-dark: #1a1a1a;
+            --secondary-dark: #242424;
+            --accent: #dc3545;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--primary-dark);
+            color: white;
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-accent:hover {
+            background-color: #bb2d3b;
+            border-color: #bb2d3b;
+        }
+
+        .btn-dark {
+            background-color: #212529;
+            border-color: #212529;
+        }
+
+        .btn-dark:hover {
+            background-color: #424649;
+            border-color: #424649;
+        }
+
+        .text-white {
+            color: white !important;
+        }
+
+        .btn-outline-accent {
+            color: var(--accent);
+            border-color: var(--accent);
+            background-color: transparent;
+        }
+        
+        .btn-outline-accent:hover {
+            color: white;
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+        
+        .follow-button {
+            transition: all 0.3s ease;
+        }
+        
+        .follow-button:hover {
+            transform: scale(1.05);
+        }
+
+        .text-accent {
+            color: var(--accent) !important;
+        }
+        
+        .comment-like-button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .comment-like-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .comment-like-button.liked {
+            color: var(--accent) !important;
+        }
+        
+        .comment-like-count {
+            font-size: 0.875rem;
+            margin-left: 0.25rem;
+        }
+
+        .compact-select {
+            width: 70px !important;
+            padding-left: 0.5rem;
+            padding-right: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .compact-select option {
+            font-size: 0.875rem;
+        }
+
+        /* Select box ok işaretini konumlandır */
+        .compact-select:not([multiple]) {
+            background-position: right 0.3rem center;
+            background-size: 8px 10px;
+        }
+
+        /* Input group düzenlemeleri */
+        .input-group .form-control-sm {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Hover ve focus durumları */
+        .compact-select:hover, .compact-select:focus {
+            border-color: var(--accent);
+        }
+    </style>
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+    {% csrf_token %}
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <!-- Logo (Sol) -->
+            <a class="navbar-brand" href="{% url 'blog:index' %}">
+                <i class="fas fa-film me-2"></i>MovieLib
+            </a>
+
+            <!-- Arama Kutusu (Orta) -->
+            <div class="d-flex align-items-center mx-auto" style="width: 50%;">
+                <div class="position-relative flex-grow-1">
+                    <div class="input-group">
+                        <select class="form-select form-select-sm bg-dark text-light border-secondary compact-select" 
+                                id="searchType">
+                            <option value="all">Tüm Kategoriler</option>
+                            <option value="movies">Film</option>
+                            <option value="series">Dizi</option>
+                            <option value="books">Kitap</option>
+                            <option value="users">Kişi</option>
+                        </select>
+                        <input type="text" 
+                               class="form-control form-control-sm bg-dark text-light border-secondary" 
+                               placeholder="Ara..." 
+                               id="searchInput"
+                               autocomplete="off">
+                    </div>
+                    <div class="position-absolute w-100 mt-1 bg-dark rounded shadow-lg" 
+                         id="searchSuggestions" 
+                         style="display: none; z-index: 1000;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profil/Giriş (Sağ) -->
+            {% if user.is_authenticated %}
+                <div class="d-flex align-items-center">
+                    <!-- Bildirim Butonu -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-dark position-relative" type="button" id="notificationsDropdown" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count"
+                                  style="display: none;">
+                                0
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end bg-dark border-secondary p-0" 
+                             aria-labelledby="notificationsDropdown" 
+                             style="width: 300px; max-height: 400px; overflow-y: auto;">
+                            <div class="notifications-list p-2">
+                                <!-- Bildirimler buraya gelecek -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'blog:profile' user.username %}" class="text-light text-decoration-none me-3">
+                        <img src="{{ user.profile.image_url }}" class="rounded-circle me-2" 
+                             style="width: 30px; height: 30px; object-fit: cover;">
+                        {{ user.username }}
+                    </a>
+                    <a href="{% url 'blog:logout' %}" class="btn btn-outline-light btn-sm">Çıkış</a>
+                </div>
+            {% else %}
+                <div>
+                    <a href="{% url 'blog:login' %}" class="btn btn-outline-light btn-sm me-2">Giriş</a>
+                    <a href="{% url 'blog:register' %}" class="btn btn-accent btn-sm">Kayıt Ol</a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript ekleyin -->
+    <script>
+    const searchInput = document.getElementById('searchInput');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            searchSuggestions.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetch(`/search/suggestions/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    
+                    // Filmler
+                    if (data.suggestions.movies.length) {
+                        html += '<div class="p-2"><h6 class="text-muted mb-2">Filmler</h6>';
+                        data.suggestions.movies.forEach(movie => {
+                            html += `<a href="/movie/${movie.id}" class="d-block text-light text-decoration-none py-1">
+                                <i class="fas fa-film me-2"></i>${movie.title}
+                            </a>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    // Diziler
+                    if (data.suggestions.series.length) {
+                        html += '<div class="p-2 border-top"><h6 class="text-muted mb-2">Diziler</h6>';
+                        data.suggestions.series.forEach(series => {
+                            html += `<a href="/series/${series.id}" class="d-block text-light text-decoration-none py-1">
+                                <i class="fas fa-tv me-2"></i>${series.title}
+                            </a>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    // Kitaplar
+                    if (data.suggestions.books.length) {
+                        html += '<div class="p-2 border-top"><h6 class="text-muted mb-2">Kitaplar</h6>';
+                        data.suggestions.books.forEach(book => {
+                            html += `<a href="/book/${book.id}" class="d-block text-light text-decoration-none py-1">
+                                <i class="fas fa-book me-2"></i>${book.title}
+                            </a>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    // Kullanıcılar
+                    if (data.suggestions.users.length) {
+                        html += '<div class="p-2 border-top"><h6 class="text-muted mb-2">Kullanıcılar</h6>';
+                        data.suggestions.users.forEach(user => {
+                            html += `<a href="/profile/${user.username}" class="d-block text-light text-decoration-none py-1">
+                                <img src="${user.image}" class="rounded-circle me-2" style="width: 24px; height: 24px;">
+                                ${user.username}
+                            </a>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    if (html) {
+                        searchSuggestions.innerHTML = html;
+                        searchSuggestions.style.display = 'block';
+                    } else {
+                        searchSuggestions.style.display = 'none';
+                    }
+                });
+        }, 300);
+    });
+
+    // Sayfa herhangi bir yerine tıklandığında önerileri gizle
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+            searchSuggestions.style.display = 'none';
+        }
+    });
+
+    // Bildirimleri kontrol et
+    function checkNotifications() {
+        fetch('{% url "blog:get_notifications" %}')
+            .then(response => response.json())
+            .then(data => {
+                const notificationsList = document.querySelector('.notifications-list');
+                const notificationCount = document.querySelector('.notification-count');
+                
+                if (data.notifications.length > 0) {
+                    notificationCount.style.display = 'block';
+                    notificationCount.textContent = data.notifications.length;
+                    
+                    let html = '';
+                    // Son 5 bildirimi göster
+                    data.notifications.slice(0, 5).forEach(notification => {
+                        let content = '';
+                        let link = '';
+                        
+                        switch(notification.type) {
+                            case 'follow':
+                                content = `<b>${notification.sender}</b> seni takip etmeye başladı`;
+                                link = `/profile/${notification.sender}`;
+                                break;
+                            case 'like':
+                                content = `<b>${notification.sender}</b> gönderini beğendi`;
+                                link = `/post/${notification.post_id}`;
+                                break;
+                            case 'comment':
+                                content = `<b>${notification.sender}</b> gönderine yorum yaptı`;
+                                link = `/post/${notification.post_id}`;
+                                break;
+                        }
+                        
+                        html += `
+                            <a href="${link}" class="dropdown-item text-light p-2 border-bottom border-secondary notification-item">
+                                <small class="text-muted d-block">${notification.created_at}</small>
+                                <div>${content}</div>
+                            </a>
+                        `;
+                    });
+                    
+                    notificationsList.innerHTML = html;
+                } else {
+                    notificationCount.style.display = 'none';
+                    notificationsList.innerHTML = '<div class="text-muted p-3 text-center">Yeni bildirim yok</div>';
+                }
+            });
+    }
+
+    // Bildirim dropdown'ı açıldığında bildirimleri okundu olarak işaretle
+    document.getElementById('notificationsDropdown')?.addEventListener('show.bs.dropdown', function () {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        fetch('{% url "blog:mark_notifications_read" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Bildirim sayacını gizle
+                const notificationCount = document.querySelector('.notification-count');
+                notificationCount.style.display = 'none';
+            }
+        });
+    });
+
+    // Periyodik olarak bildirimleri kontrol et
+    if (document.querySelector('.notifications-list')) {
+        checkNotifications();
+        setInterval(checkNotifications, 30000); // Her 30 saniyede bir kontrol et
+    }
+    </script>
+</body>
+</html> 
+</html> 

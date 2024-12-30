@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{ user.username }} - Takip Edilenler</title>
+    <style>
+        :root {
+            --primary-dark: #18181B;
+            --secondary-dark: #27272A;
+            --accent: #E50914;
+            --text-light: #FFFFFF;
+            --text-gray: #A1A1AA;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--secondary-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 0;
+        }
+
+        .card {
+            background-color: var(--secondary-dark);
+            border: none;
+            border-radius: 12px;
+        }
+
+        .card-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+        }
+
+        .following-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .following-item:last-child {
+            border-bottom: none;
+        }
+
+        .following-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .follow-btn {
+            transition: all 0.3s ease;
+        }
+
+        .follow-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="{% url 'blog:profile' user.username %}" class="text-light text-decoration-none">
+                <i class="fas fa-arrow-left me-2"></i>
+                Profile Dön
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ user.username }} - Takip Edilenler ({{ user.profile.following_count }})</h5>
+            </div>
+            <div class="card-body">
+                {% for follow in following %}
+                    <div class="following-item">
+                        <img src="{{ follow.followed.profile.image_url }}" 
+                             class="rounded-circle me-3" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        <div class="flex-grow-1">
+                            <a href="{% url 'blog:profile' follow.followed.username %}" 
+                               class="text-light text-decoration-none">
+                                <h6 class="mb-0">{{ follow.followed.username }}</h6>
+                            </a>
+                            <small class="text-muted">{{ follow.created_at|timesince }} önce takip edildi</small>
+                        </div>
+                        {% if request.user != follow.followed %}
+                            <button class="btn btn-sm {% if request.user in follow.followed.followers.all %}btn-secondary{% else %}btn-accent{% endif %} follow-btn"
+                                    onclick="toggleFollow(this, '{{ follow.followed.username }}')">
+                                {% if request.user in follow.followed.followers.all %}
+                                    <i class="fas fa-user-check"></i>
+                                {% else %}
+                                    <i class="fas fa-user-plus"></i>
+                                {% endif %}
+                            </button>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-muted text-center my-4">Henüz kimseyi takip etmiyor</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function toggleFollow(button, username) {
+        fetch(`{% url 'blog:toggle_follow' 'username' %}`.replace('username', username), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            if (data.is_following) {
+                button.innerHTML = '<i class="fas fa-user-check"></i>';
+                button.classList.replace('btn-accent', 'btn-secondary');
+            } else {
+                button.innerHTML = '<i class="fas fa-user-plus"></i>';
+                button.classList.replace('btn-secondary', 'btn-accent');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+        });
+    }
+    </script>
+</body>
+</html> 

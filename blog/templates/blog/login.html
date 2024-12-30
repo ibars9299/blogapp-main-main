@@ -1,0 +1,112 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body p-4">
+                    <!-- Logo ve Başlık -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-film fa-3x text-accent mb-3"></i>
+                        <h4 class="mb-0">MovieLib'e Hoş Geldiniz</h4>
+                        <p class="text-muted">Film, dizi ve kitap dünyasına giriş yapın</p>
+                    </div>
+
+                    <!-- Giriş Formu -->
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Kullanıcı Adı -->
+                        <div class="form-floating mb-3">
+                            <input type="text" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="username" 
+                                   name="username" 
+                                   placeholder="Kullanıcı Adı"
+                                   required>
+                            <label for="username" class="text-muted">Kullanıcı Adı</label>
+                        </div>
+
+                        <!-- Şifre -->
+                        <div class="form-floating mb-4">
+                            <input type="password" 
+                                   class="form-control bg-dark text-light border-secondary" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Şifre"
+                                   required>
+                            <label for="password" class="text-muted">Şifre</label>
+                        </div>
+
+                        <!-- Giriş Butonu -->
+                        <button type="submit" class="btn btn-accent w-100 py-2 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                        </button>
+
+                        <!-- Kayıt Ol Linki -->
+                        <p class="text-center mb-0">
+                            Hesabınız yok mu? 
+                            <a href="{% url 'blog:register' %}" class="text-accent text-decoration-none">
+                                Hemen Kayıt Olun
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Hata Mesajları -->
+            {% if form.errors %}
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Kullanıcı adı veya şifre hatalı.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Form kontrolleri için özel stiller */
+.form-floating > .form-control {
+    background-color: var(--secondary-dark) !important;
+    border-color: rgba(255, 255, 255, 0.1);
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(.85) translateY(-1rem) translateX(.15rem);
+    color: var(--accent);
+}
+
+/* Animasyonlar */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-accent {
+    transition: all 0.3s ease;
+}
+
+.btn-accent:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+</style>
+{% endblock %} 

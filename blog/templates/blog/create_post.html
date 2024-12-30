@@ -1,0 +1,79 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Gönderi Oluştur</h4>
+                    
+                    <div class="content-preview mb-4">
+                        <div class="d-flex">
+                            <img src="{{ content.image }}" alt="{{ content.title }}" 
+                                 style="width: 100px; height: 150px; object-fit: cover;">
+                            <div class="ms-3">
+                                <h5>{{ content.title }}</h5>
+                                {% if content_type == 'movie' %}
+                                    <p class="text-muted">{{ content.year }} • {{ content.genre }} • {{ content.duration }}</p>
+                                {% elif content_type == 'series' %}
+                                    <p class="text-muted">{{ content.year }} • {{ content.genre }} • {{ content.seasons }} Sezon</p>
+                                {% else %}
+                                    <p class="text-muted">{{ content.author }} • {{ content.genre }} • {{ content.pages }} sayfa</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Puanınız</label>
+                            <div class="rating-input">
+                                {% for i in "12345678910"|make_list %}
+                                    <input type="radio" name="rating" value="{{ forloop.counter }}" 
+                                           id="rating{{ forloop.counter }}">
+                                    <label for="rating{{ forloop.counter }}">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Düşünceleriniz</label>
+                            <textarea class="form-control" name="content" rows="4" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-accent">Paylaş</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 1.5rem;
+}
+
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: #ffc107;
+}
+</style>
+{% endblock %} 
